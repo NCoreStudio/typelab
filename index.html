@@ -102,6 +102,9 @@ body::before {
   position: relative;
   flex-shrink: 0;
   z-index: 1001;
+  /* ユーザー名が長くなってもはみ出さないよう最大幅を制限 */
+  max-width: 160px;
+  overflow: hidden;
 }
 .mypage-icon-btn:hover {
   background: var(--accent-light);
@@ -127,6 +130,9 @@ body::before {
   font-weight: 700;
   letter-spacing: 0.03em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
 }
 /* ログイン済み緑ドット */
 .mypage-login-dot {
@@ -162,7 +168,8 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .site-logo {
@@ -171,6 +178,7 @@ body::before {
   gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .logo-mark {
@@ -279,11 +287,13 @@ body::before {
   justify-content: center;
   width: 44px;
   height: 44px;
+  min-width: 44px;
   background: var(--bg);
   border: none;
   cursor: pointer;
   z-index: 1001;
   position: relative;
+  flex-shrink: 0;
 }
 
 .hamburger span {
@@ -372,7 +382,7 @@ body::before {
 
 .hero-heading {
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 6vw, 5.2rem);
+  font-size: clamp(1.75rem, 5.5vw, 5.2rem);
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 20px;
@@ -1061,6 +1071,27 @@ body::before {
   }
 
   .hamburger { display: flex; }
+
+  /* ══ スマホ：mypageボタンのラベルを短縮 ══ */
+  .mypage-icon-btn {
+    max-width: 140px;
+    padding: 6px 10px;
+    gap: 5px;
+  }
+  .mypage-label {
+    max-width: 70px;
+  }
+  .mypage-avatar-ring {
+    width: 30px;
+    height: 30px;
+    font-size: 0.95rem;
+  }
+
+  /* ══ ヒーロー見出しをスマホで最適化 ══ */
+  .hero-heading {
+    font-size: clamp(1.6rem, 7.5vw, 2.2rem);
+    line-height: 1.2;
+  }
 
   /* ══ 開いた状態：body直下のfixedドロワー ══ */
   .site-nav.open {
@@ -2059,7 +2090,8 @@ _fbScript1.onload = () => {
             const data = doc.exists ? doc.data() : {};
             avatarEl.textContent = data.avatar || '🧪';
             const name = (data.username || user.displayName || 'あなた');
-            labelEl.textContent = name.length > 6 ? name.slice(0, 6) + '…' : name;
+            // CSSのtext-overflow:ellipsisで省略するため、JS側は長めに設定
+            labelEl.textContent = name.length > 10 ? name.slice(0, 10) + '…' : name;
           } catch(e) {
             avatarEl.textContent = '🧪';
           }
