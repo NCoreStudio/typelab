@@ -1035,45 +1035,76 @@ body::before {
 }
 
 @media (max-width: 720px) {
+  /* ── デスクトップ用リストは非表示 ── */
   .site-nav { display: none; }
   .hamburger { display: flex; }
 
+  /* ── 開いた状態：position:fixedで画面全体に展開 ── */
   .site-nav.open {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
+    list-style: none;
+    /* navタグ除去済みのため、fixedで確実に画面全体へ */
     position: fixed;
-    top: 64px;
+    top: 64px;          /* ヘッダー高さ分 */
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(250,248,255,0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    padding: 32px 24px;
-    gap: 6px;
+    width: 100vw;       /* 横幅を確実に100%に */
+    margin: 0;
+    padding: 20px 16px 40px;
+    gap: 8px;
+    background: rgba(250,248,255,0.97);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     overflow-y: auto;
-    z-index: 999;
-    box-shadow: 0 8px 32px rgba(90,60,120,.15);
-    animation: slideDown 0.25s ease both;
+    -webkit-overflow-scrolling: touch;
+    z-index: 998;       /* mypage(1001) hamburger(1001) より下 */
+    box-shadow: 0 4px 24px rgba(90,60,120,.14);
+    animation: slideDown 0.22s ease both;
   }
 
   @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-12px); }
+    from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .site-nav.open li { width: 100%; }
-  .site-nav.open a {
+  /* リスト項目 */
+  .site-nav.open > li {
     width: 100%;
-    padding: 16px 20px;
-    border-radius: 14px;
-    font-size: 1rem;
-    background: rgba(124,58,237,.04);
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: block;
   }
 
+  /* リンク */
+  .site-nav.open > li > a {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ink);
+    background: rgba(124,58,237,.04);
+    border: 1.5px solid transparent;
+    transition: background .15s, border-color .15s;
+  }
+  .site-nav.open > li > a:hover,
+  .site-nav.open > li > a:active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: rgba(124,58,237,.2);
+  }
+
+  /* プレミアムリンクだけ色を維持 */
+  .site-nav.open .nav-premium > a {
+    background: linear-gradient(135deg, var(--accent), #c026d3) !important;
+    color: white !important;
+    box-shadow: 0 2px 10px rgba(124,58,237,.25);
+  }
+
+  /* ── スマホ用その他レイアウト調整 ── */
   .section-header { flex-direction: column; align-items: flex-start; }
   .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .footer-top { flex-direction: column; gap: 32px; }
@@ -1108,14 +1139,12 @@ body::before {
       </span>
     </a>
 
-    <nav>
-      <ul class="site-nav" id="siteNav">
+    <ul class="site-nav" id="siteNav" role="list">
         <li><a href="#about"><span class="nav-icon">📖</span>サイト紹介</a></li>
         <li><a href="#column"><span class="nav-icon">✏️</span>コラム</a></li>
         <li class="nav-premium"><a href="#premium"><span class="nav-icon">✨</span>プレミアム診断</a></li>
         <li><a href="#sns"><span class="nav-icon">🔗</span>関連SNS</a></li>
-      </ul>
-    </nav>
+    </ul>
 
     <!-- マイページアイコン -->
     <a href="./mypage.html" class="mypage-icon-btn" id="mypageBtn" aria-label="マイページ" title="マイページ">
@@ -1687,26 +1716,40 @@ body::before {
 const hamburger = document.getElementById('hamburger');
 const nav = document.getElementById('siteNav');
 
-hamburger.addEventListener('click', () => {
-  nav.classList.toggle('open');
-  hamburger.setAttribute('aria-expanded', nav.classList.contains('open'));
+/* ── メニュー開閉ユーティリティ ── */
+function closeNav() {
+  nav.classList.remove('open');
+  hamburger.setAttribute('aria-expanded', 'false');
+  hamburger.querySelectorAll('span').forEach(s => s.style.cssText = '');
+  document.body.style.overflow = '';
+}
+function openNav() {
+  nav.classList.add('open');
+  hamburger.setAttribute('aria-expanded', 'true');
   const spans = hamburger.querySelectorAll('span');
-  if (nav.classList.contains('open')) {
-    spans[0].style.cssText = 'transform:translateY(7px) rotate(45deg)';
-    spans[1].style.cssText = 'opacity:0';
-    spans[2].style.cssText = 'transform:translateY(-7px) rotate(-45deg)';
-  } else {
-    spans.forEach(s => s.style.cssText = '');
-  }
+  spans[0].style.cssText = 'transform:translateY(7px) rotate(45deg)';
+  spans[1].style.cssText = 'opacity:0';
+  spans[2].style.cssText = 'transform:translateY(-7px) rotate(-45deg)';
+  document.body.style.overflow = 'hidden';
+}
+
+hamburger.addEventListener('click', () => {
+  if (nav.classList.contains('open')) { closeNav(); } else { openNav(); }
 });
 
-// ナビのリンククリックでメニューを閉じる
+// リンククリックで閉じる
 nav.querySelectorAll('a').forEach(a => {
-  a.addEventListener('click', () => {
-    nav.classList.remove('open');
-    hamburger.querySelectorAll('span').forEach(s => s.style.cssText = '');
-  });
+  a.addEventListener('click', () => closeNav());
 });
+
+// メニュー外タップで閉じる（スマホ対応）
+document.addEventListener('touchstart', (e) => {
+  if (nav.classList.contains('open') &&
+      !nav.contains(e.target) &&
+      !hamburger.contains(e.target)) {
+    closeNav();
+  }
+}, { passive: true });
 
 /* ── ジャンルタブ ── */
 const tabs = document.querySelectorAll('.genre-tab');
