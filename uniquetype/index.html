@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>わらいのツボ診断</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Marugothic&family=DotGothic16&family=Kaisei+Decol:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-bg: #fff8f0;
+    --c-card: #ffffff;
+    --c-hotoko: #ff9eb5;
+    --c-hotoko-light: #ffeef4;
+    --c-hirameки: #7ec8e3;
+    --c-hirameki: #7ec8e3;
+    --c-hirameki-light: #e8f7fc;
+    --c-spicy: #ffb347;
+    --c-spicy-light: #fff4e0;
+    --c-chaos: #b59fdb;
+    --c-chaos-light: #f3eeff;
+    --c-text: #3d2b1f;
+    --c-muted: #9b8b82;
+    --c-accent: #ff6b9d;
+    --r: 20px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Zen Marugothic', sans-serif;
+    background: var(--c-bg);
+    min-height: 100vh;
+    color: var(--c-text);
+    overflow-x: hidden;
+  }
+
+  /* ─── 背景デコ ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, #ffd6e7 0%, transparent 40%),
+      radial-gradient(circle at 85% 75%, #c8e6ff 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, #f3eeff 0%, transparent 60%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 60px;
+  }
+
+  /* ─── START SCREEN ─── */
+  #screen-start {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    gap: 24px;
+    padding: 40px 0;
+  }
+
+  .logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-emoji {
+    font-size: 64px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .title-main {
+    font-family: 'Kaisei Decol', serif;
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--c-text);
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+  }
+
+  .title-sub {
+    font-size: 14px;
+    color: var(--c-muted);
+    letter-spacing: 0.1em;
+  }
+
+  .start-card {
+    background: white;
+    border-radius: var(--r);
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    width: 100%;
+  }
+
+  .start-card p {
+    font-size: 15px;
+    line-height: 2;
+    color: var(--c-text);
+    text-align: left;
+  }
+
+  .type-preview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .type-chip {
+    border-radius: 50px;
+    padding: 8px 12px;
+    font-size: 13px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+  }
+  .chip-a { background: var(--c-hotoko-light); color: #c0396a; }
+  .chip-b { background: var(--c-hirameki-light); color: #2a7a96; }
+  .chip-c { background: var(--c-spicy-light); color: #b05f00; }
+  .chip-d { background: var(--c-chaos-light); color: #6b4ca0; }
+
+  .btn-start {
+    background: linear-gradient(135deg, #ff6b9d, #ff9eb5);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 48px;
+    font-family: 'Kaisei Decol', serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,107,157,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,107,157,0.5); }
+  .btn-start:active { transform: translateY(0); }
+
+  .note-text {
+    font-size: 12px;
+    color: var(--c-muted);
+    text-align: center;
+  }
+
+  /* ─── QUESTION SCREEN ─── */
+  #screen-quiz {
+    display: none;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 24px;
+    gap: 20px;
+  }
+
+  .quiz-header {
+    text-align: center;
+  }
+
+  .quiz-count {
+    font-size: 13px;
+    color: var(--c-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar-wrap {
+    background: #f0e8e4;
+    border-radius: 50px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff9eb5, #ff6b9d);
+    border-radius: 50px;
+    transition: width 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  .question-card {
+    background: white;
+    border-radius: 24px;
+    padding: 32px 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    animation: slideIn 0.35s cubic-bezier(0.34,1.2,0.64,1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(40px) scale(0.97); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  .q-icon {
+    font-size: 40px;
+  }
+
+  .q-text {
+    font-family: 'Kaisei Decol', serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.6;
+    color: var(--c-text);
+  }
+
+  .choices-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    background: white;
+    border: 2px solid #f0e8e4;
+    border-radius: 16px;
+    padding: 14px 20px;
+    font-family: 'Zen Marugothic', sans-serif;
+    font-size: 16px;
+    color: var(--c-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.18s ease;
+    text-align: left;
+  }
+
+  .choice-btn:hover {
+    border-color: #ff9eb5;
+    background: #fff5f8;
+    transform: translateX(4px);
+  }
+
+  .choice-btn.selected {
+    border-color: var(--c-accent);
+    background: #fff0f5;
+    color: var(--c-accent);
+    font-weight: bold;
+  }
+
+  .choice-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .dot-5 { background: #ffd6e7; color: #c0396a; }
+  .dot-4 { background: #ffe4b5; color: #b05f00; }
+  .dot-3 { background: #e8f0ff; color: #4a6aaa; }
+  .dot-2 { background: #f0f0f0; color: #888; }
+  .dot-1 { background: #e8ffe8; color: #3a8a3a; }
+
+  .nav-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-prev {
+    background: white;
+    border: 2px solid #f0e8e4;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-family: 'Zen Marugothic', sans-serif;
+    font-size: 15px;
+    color: var(--c-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-prev:hover { border-color: #ccc; color: var(--c-text); }
+  .btn-prev:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-next {
+    flex: 1;
+    background: linear-gradient(135deg, #ff6b9d, #ff9eb5);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 24px;
+    font-family: 'Kaisei Decol', serif;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255,107,157,0.35);
+    transition: all 0.15s;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .btn-next.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .btn-next.active:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,107,157,0.45); }
+
+  /* ─── RESULT SCREEN ─── */
+  #screen-result {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-top: 32px;
+    padding-bottom: 60px;
+  }
+
+  .result-label {
+    font-size: 14px;
+    color: var(--c-muted);
+    letter-spacing: 0.15em;
+    text-align: center;
+  }
+
+  .result-hero {
+    width: 100%;
+    border-radius: 28px;
+    padding: 36px 28px;
+    text-align: center;
+    box-shadow: 0 8px 36px rgba(0,0,0,0.10);
+    animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .result-type-a { background: linear-gradient(135deg, #ffd6e7, #ffb3cc); }
+  .result-type-b { background: linear-gradient(135deg, #c8e6ff, #9bd3ee); }
+  .result-type-c { background: linear-gradient(135deg, #ffe5b4, #ffcf80); }
+  .result-type-d { background: linear-gradient(135deg, #e8d5ff, #d0b8f5); }
+
+  .result-icon {
+    font-size: 72px;
+    animation: wiggle 3s ease-in-out infinite;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
+  .result-type-name {
+    font-family: 'Kaisei Decol', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 12px;
+    color: var(--c-text);
+  }
+
+  .result-catch {
+    font-size: 15px;
+    line-height: 1.9;
+    margin-top: 16px;
+    color: var(--c-text);
+    opacity: 0.85;
+  }
+
+  .result-details {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .detail-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .detail-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .detail-tag {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    border-radius: 50px;
+  }
+  .tag-a { background: var(--c-hotoko-light); color: #c0396a; }
+  .tag-b { background: var(--c-hirameki-light); color: #2a7a96; }
+  .tag-c { background: var(--c-spicy-light); color: #b05f00; }
+
+  .detail-card p {
+    font-size: 14px;
+    line-height: 1.9;
+    color: var(--c-text);
+  }
+
+  /* レーダー風スコア */
+  .score-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    width: 100%;
+  }
+
+  .score-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--c-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .score-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .score-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .score-label {
+    font-size: 13px;
+    width: 100px;
+    flex-shrink: 0;
+    color: var(--c-text);
+  }
+
+  .score-bar-bg {
+    flex: 1;
+    height: 10px;
+    background: #f0e8e4;
+    border-radius: 50px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 50px;
+    transition: width 1s cubic-bezier(0.34,1.2,0.64,1);
+  }
+
+  .fill-a { background: linear-gradient(90deg, #ff9eb5, #ff6b9d); }
+  .fill-b { background: linear-gradient(90deg, #7ec8e3, #4ab0d0); }
+  .fill-c { background: linear-gradient(90deg, #ffb347, #ff8c00); }
+  .fill-d { background: linear-gradient(90deg, #b59fdb, #9370c8); }
+
+  .score-pct {
+    font-size: 12px;
+    font-weight: bold;
+    width: 32px;
+    text-align: right;
+    color: var(--c-muted);
+  }
+
+  .share-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    text-align: center;
+  }
+
+  .share-title {
+    font-size: 13px;
+    color: var(--c-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+
+  .share-text-box {
+    background: #faf8f6;
+    border: 1.5px dashed #f0c8d8;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--c-text);
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .share-text-box:hover { background: #fff0f5; }
+
+  .btn-copy {
+    background: linear-gradient(135deg, #ff6b9d, #ff9eb5);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-family: 'Zen Marugothic', sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    box-shadow: 0 4px 16px rgba(255,107,157,0.3);
+  }
+  .btn-copy:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255,107,157,0.4); }
+
+  .copy-done {
+    font-size: 13px;
+    color: #3aaa3a;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-retry {
+    background: white;
+    border: 2px solid #f0e8e4;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-family: 'Zen Marugothic', sans-serif;
+    font-size: 15px;
+    color: var(--c-muted);
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .btn-retry:hover { border-color: #ff9eb5; color: var(--c-accent); }
+
+  /* ─── サブタイプ表示 ─── */
+  .sub-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-top: 12px;
+  }
+
+  /* ─── Loading ─── */
+  #screen-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .loading-emoji {
+    font-size: 56px;
+    animation: spin 1.2s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-family: 'Kaisei Decol', serif;
+    font-size: 20px;
+    color: var(--c-text);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .floaty {
+    position: fixed;
+    pointer-events: none;
+    font-size: 24px;
+    animation: floatUp 3s ease-out forwards;
+    z-index: 999;
+  }
+
+  @keyframes floatUp {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(-120px) scale(1.4); }
+  }
+
+  /* ─── サブ同点時 ─── */
+  .tied-note {
+    font-size: 13px;
+    color: var(--c-muted);
+    background: white;
+    border-radius: 12px;
+    padding: 12px 16px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow);
+    line-height: 1.8;
+  }
+
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ─── START ─── -->
+  <div id="screen-start">
+    <div class="logo-area">
+      <div class="logo-emoji">😂</div>
+      <div class="title-main">わらいのツボ<br>診断</div>
+      <div class="title-sub">あなたの「笑い」のクセ、知ってみよう</div>
+    </div>
+
+    <div class="start-card">
+      <p>全部で <strong>20問</strong>。<br>直感でサクサク答えるのがコツ！<br>あなたの笑いのツボ、4タイプから見つけます✨</p>
+      <div class="type-preview">
+        <div class="type-chip chip-a">🌸 ほっこり共感</div>
+        <div class="type-chip chip-b">💡 ひらめき構造</div>
+        <div class="type-chip chip-c">🌶 ピリ辛スパイス</div>
+        <div class="type-chip chip-d">🌀 ふしぎカオス</div>
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="startQuiz()">診断スタート！</button>
+    <div class="note-text">所要時間：約3〜5分</div>
+  </div>
+
+  <!-- ─── QUIZ ─── -->
+  <div id="screen-quiz">
+    <div class="quiz-header">
+      <div class="quiz-count" id="quiz-count">Q1 / 20</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill" style="width:5%"></div>
+      </div>
+    </div>
+
+    <div class="question-card" id="question-card">
+      <div class="q-icon" id="q-icon">😊</div>
+      <div class="q-text" id="q-text">質問文</div>
+    </div>
+
+    <div class="choices-grid" id="choices-grid">
+      <button class="choice-btn" onclick="selectChoice(5)">
+        <span class="choice-dot dot-5">★★</span>とてもそう思う
+      </button>
+      <button class="choice-btn" onclick="selectChoice(4)">
+        <span class="choice-dot dot-4">★</span>ややそう思う
+      </button>
+      <button class="choice-btn" onclick="selectChoice(3)">
+        <span class="choice-dot dot-3">〜</span>どちらでもない
+      </button>
+      <button class="choice-btn" onclick="selectChoice(2)">
+        <span class="choice-dot dot-2">△</span>あまりそう思わない
+      </button>
+      <button class="choice-btn" onclick="selectChoice(1)">
+        <span class="choice-dot dot-1">✗</span>まったくそう思わない
+      </button>
+    </div>
+
+    <div class="nav-area">
+      <button class="btn-prev" id="btn-prev" onclick="prevQuestion()" disabled>← もどる</button>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">つぎへ →</button>
+    </div>
+  </div>
+
+  <!-- ─── LOADING ─── -->
+  <div id="screen-loading">
+    <div class="loading-emoji">🔍</div>
+    <div class="loading-text">あなたの笑いのツボを<br>分析中…</div>
+  </div>
+
+  <!-- ─── RESULT ─── -->
+  <div id="screen-result">
+    <div class="result-label">✨ 診断結果 ✨</div>
+
+    <div class="result-hero" id="result-hero">
+      <div class="result-icon" id="result-icon">🌸</div>
+      <div class="result-type-name" id="result-type-name">ほっこり共感タイプ</div>
+      <div class="result-catch" id="result-catch">キャッチコピー</div>
+      <div id="sub-badge-area"></div>
+    </div>
+
+    <div class="result-details" id="result-details"></div>
+
+    <div class="score-card">
+      <div class="score-title">あなたの笑いのバランス</div>
+      <div class="score-bars" id="score-bars"></div>
+    </div>
+
+    <div id="tied-note-area"></div>
+
+    <div class="share-card">
+      <div class="share-title">📲 シェア用テキスト</div>
+      <div class="share-text-box" id="share-text" onclick="copyShare()"></div>
+      <button class="btn-copy" onclick="copyShare()">コピーする</button>
+      <div class="copy-done" id="copy-done">✅ コピーしました！</div>
+    </div>
+
+    <button class="btn-retry" onclick="retryQuiz()">🔄 もういちど診断する</button>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────
+//  タイプデータ
+// ─────────────────────────────────────
+const TYPES = {
+  A: {
+    key: 'A',
+    name: 'ほっこり共感タイプ',
+    icon: '🌸',
+    heroClass: 'result-type-a',
+    catch: '「みんなで笑える」がいちばん大事。\n空気がやわらぐ瞬間が好き。\n安心できる笑いに心が動きます。',
+    details: [
+      {
+        tag: '笑いのスタイル',
+        tagClass: 'tag-a',
+        body: '日常の「あるある」でクスっとするのが得意。誰かが笑えば自分も笑えるし、みんなが気持ちよくなる瞬間を自然に大切にしています。'
+      },
+      {
+        tag: '人との関わり方',
+        tagClass: 'tag-b',
+        body: '場の空気を読む力が高く、周りをほっとさせる存在です。笑いを通じてコミュニケーションするのがとても上手。'
+      },
+      {
+        tag: 'ツボの深め方',
+        tagClass: 'tag-c',
+        body: 'ちょっとした日常のエピソード、家族や友人との小さな出来事。そういうところに素直に笑える感性があなたの武器です。'
+      }
+    ],
+    share: '診断したら「🌸 ほっこり共感タイプ」でした！みんなで笑えることが大好き。あなたは何タイプ？ #わらいのツボ診断'
+  },
+  B: {
+    key: 'B',
+    name: 'ひらめき構造タイプ',
+    icon: '💡',
+    heroClass: 'result-type-b',
+    catch: 'ネタの「仕組み」が見えたとき、\nひとりでにやっとするタイプ。\n知的でクールな笑いの持ち主です。',
+    details: [
+      {
+        tag: '笑いのスタイル',
+        tagClass: 'tag-a',
+        body: 'ことばのズレや伏線の回収に鋭く反応します。「あ、そういうことか！」という瞬間の快感が大好き。ネタを"解読"するのが楽しい。'
+      },
+      {
+        tag: '人との関わり方',
+        tagClass: 'tag-b',
+        body: 'さりげなくいい突っ込みを入れたり、みんなが見落とした「ズレ」に気づく観察眼があります。センスがいいと言われることも多いはず。'
+      },
+      {
+        tag: 'ツボの深め方',
+        tagClass: 'tag-c',
+        body: 'ひとひねりきいた映像、言葉遊びのある文章、ちょっと深読みしたくなるコント…そういうコンテンツであなたの笑いのアンテナは全開になります。'
+      }
+    ],
+    share: '診断したら「💡 ひらめき構造タイプ」でした！ネタの仕組みを理解したときにひとりでにやっとする派。あなたは？ #わらいのツボ診断'
+  },
+  C: {
+    key: 'C',
+    name: 'ピリ辛スパイスタイプ',
+    icon: '🌶',
+    heroClass: 'result-type-c',
+    catch: '刺激と解放感が笑いのスパイス。\nちょっとヒヤッとするネタも平気。\n攻めた笑いも楽しめる強いタイプ。',
+    details: [
+      {
+        tag: '笑いのスタイル',
+        tagClass: 'tag-a',
+        body: '少しドキッとするようなネタ、緊張感のあるシーン、そこからの爆発的な笑い。その緩急がたまらないと感じています。'
+      },
+      {
+        tag: '人との関わり方',
+        tagClass: 'tag-b',
+        body: '笑いの「オチ」に向かって引っ張る力があり、場の熱量を上げることが得意。大胆な笑いに怯まない度胸があります。'
+      },
+      {
+        tag: 'ツボの深め方',
+        tagClass: 'tag-c',
+        body: '少しアウトな空気感も笑いに変えられる許容範囲の広さが強み。ただ「面白ければなんでもいい」ではなく、笑いのバランス感覚もちゃんと持っています。'
+      }
+    ],
+    share: '診断したら「🌶 ピリ辛スパイスタイプ」でした！ちょっと攻めた笑いも平気なドキドキ系。あなたのタイプは？ #わらいのツボ診断'
+  },
+  D: {
+    key: 'D',
+    name: 'ふしぎカオスタイプ',
+    icon: '🌀',
+    heroClass: 'result-type-d',
+    catch: '説明できないのに笑える。\nそれがいちばん最高だと知っている。\n笑いの宇宙人、最前線を行く人。',
+    details: [
+      {
+        tag: '笑いのスタイル',
+        tagClass: 'tag-a',
+        body: '「これ何がおもしろいの？」と聞かれても答えられないのに、なぜかツボにはまる。不条理なあの感じが最高の笑いだと知っています。'
+      },
+      {
+        tag: '人との関わり方',
+        tagClass: 'tag-b',
+        body: '笑いのセンサーが独特なので、みんなが笑わないところで先に反応することも。少し変わったユーモアの持ち主として個性的な存在感があります。'
+      },
+      {
+        tag: 'ツボの深め方',
+        tagClass: 'tag-c',
+        body: '突然の展開、意味のなさそうな言葉の連なり、説明不能なシュールな映像…そういうカオスの中にあなたは笑いの神様を見ています。'
+      }
+    ],
+    share: '診断したら「🌀 ふしぎカオスタイプ」でした！説明できないのに笑えるシュール芸人タイプ。あなたは？ #わらいのツボ診断'
+  }
+};
+
+// ─────────────────────────────────────
+//  質問データ（各タイプ5問）
+//  type: A=ほっこり, B=ひらめき, C=スパイス, D=カオス
+// ─────────────────────────────────────
+const QUESTIONS = [
+  // ── A: ほっこり共感 ──
+  { type:'A', icon:'😊', text:'友達の"あるある話"でよく笑う' },
+  { type:'A', icon:'🤝', text:'場の空気がやわらぐ笑いが好き' },
+  { type:'A', icon:'👨‍👩‍👧', text:'家族や友人の日常話で笑えることが多い' },
+  { type:'A', icon:'😌', text:'誰も傷つかない笑いにいちばん安心する' },
+  { type:'A', icon:'🌷', text:'「分かる！」と共感できるネタに弱い' },
+
+  // ── B: ひらめき構造 ──
+  { type:'B', icon:'🎯', text:'伏線が回収される瞬間が気持ちいい' },
+  { type:'B', icon:'🧠', text:'ことばの二重の意味に気づいて笑うことが多い' },
+  { type:'B', icon:'🔍', text:'ネタの「構造」を理解すると余計おかしい' },
+  { type:'B', icon:'💬', text:'皮肉やちょっとしたメタなギャグが好き' },
+  { type:'B', icon:'🎪', text:'ひとひねりきいたオチがないと物足りない' },
+
+  // ── C: ピリ辛スパイス ──
+  { type:'C', icon:'🌶', text:'ちょっと毒のあるネタも笑える' },
+  { type:'C', icon:'⚡', text:'緊張感があってからのオチが最高に好き' },
+  { type:'C', icon:'🎭', text:'少し攻めたジョークも楽しめるほうだ' },
+  { type:'C', icon:'🔥', text:'ドキッとした後に笑えるネタが癖になる' },
+  { type:'C', icon:'💣', text:'タブー破りのユーモアにも笑えることがある' },
+
+  // ── D: ふしぎカオス ──
+  { type:'D', icon:'🌀', text:'意味が分からない動画で笑うことがある' },
+  { type:'D', icon:'👽', text:'なぜ面白いか説明できないものに一番笑う' },
+  { type:'D', icon:'🎲', text:'突然の展開や予想外の流れが大好き' },
+  { type:'D', icon:'🌈', text:'不条理でシュールなギャグに弱い' },
+  { type:'D', icon:'🫠', text:'「これは何？」という動画でツボにはまる' },
+];
+
+// ランダムシャッフル（Fisher-Yates）
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─────────────────────────────────────
+//  状態管理
+// ─────────────────────────────────────
+let shuffledQ = [];
+let currentIdx = 0;
+let answers = [];
+let selectedValue = null;
+
+function startQuiz() {
+  shuffledQ = shuffle(QUESTIONS);
+  answers = new Array(20).fill(null);
+  currentIdx = 0;
+  selectedValue = null;
+  showQuestion();
+  switchScreen('quiz');
+}
+
+function showQuestion() {
+  const q = shuffledQ[currentIdx];
+  document.getElementById('q-icon').textContent = q.icon;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('quiz-count').textContent = `Q${currentIdx+1} / 20`;
+  document.getElementById('progress-fill').style.width = `${((currentIdx+1)/20)*100}%`;
+
+  // ボタンのリセット
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(btn => btn.classList.remove('selected'));
+  document.getElementById('btn-prev').disabled = currentIdx === 0;
+
+  // 既存回答の復元
+  selectedValue = answers[currentIdx];
+  const valueMap = [5,4,3,2,1];
+  if (selectedValue !== null) {
+    btns.forEach((btn, i) => {
+      if (valueMap[i] === selectedValue) btn.classList.add('selected');
+    });
+    enableNext(true);
+  } else {
+    enableNext(false);
+  }
+
+  // カードアニメーション
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = 'slideIn 0.35s cubic-bezier(0.34,1.2,0.64,1)';
+}
+
+function selectChoice(value) {
+  selectedValue = value;
+  answers[currentIdx] = value;
+
+  const btns = document.querySelectorAll('.choice-btn');
+  const valueMap = [5,4,3,2,1];
+  btns.forEach((btn, i) => {
+    btn.classList.toggle('selected', valueMap[i] === value);
+  });
+
+  enableNext(true);
+
+  // フローティングアニメ
+  const emojis = ['😂','🤣','😆','🥹','😄','✨','👍'];
+  const el = document.createElement('div');
+  el.className = 'floaty';
+  el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  el.style.left = (Math.random() * 60 + 20) + '%';
+  el.style.bottom = '20%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3100);
+
+  // 500ms後に自動進行（UX向上）
+  setTimeout(() => {
+    if (answers[currentIdx] === value) nextQuestion();
+  }, 500);
+}
+
+function enableNext(on) {
+  const btn = document.getElementById('btn-next');
+  btn.classList.toggle('active', on);
+  btn.textContent = currentIdx === 19 ? '結果を見る ✨' : 'つぎへ →';
+}
+
+function nextQuestion() {
+  if (answers[currentIdx] === null) return;
+  if (currentIdx < 19) {
+    currentIdx++;
+    showQuestion();
+  } else {
+    showLoading();
+  }
+}
+
+function prevQuestion() {
+  if (currentIdx > 0) {
+    currentIdx--;
+    showQuestion();
+  }
+}
+
+function showLoading() {
+  switchScreen('loading');
+  setTimeout(() => showResult(), 1800);
+}
+
+// ─────────────────────────────────────
+//  スコア計算
+// ─────────────────────────────────────
+function calcScores() {
+  const scores = { A:0, B:0, C:0, D:0 };
+  shuffledQ.forEach((q, i) => {
+    if (answers[i] !== null) scores[q.type] += answers[i];
+  });
+  return scores;
+}
+
+function getTopType(scores) {
+  return Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+}
+
+function showResult() {
+  const scores = calcScores();
+  const topKey = getTopType(scores);
+  const type = TYPES[topKey];
+  const maxPossible = 5 * 5; // 5問×5点
+
+  // ヒーローカード
+  const hero = document.getElementById('result-hero');
+  hero.className = `result-hero ${type.heroClass}`;
+  document.getElementById('result-icon').textContent = type.icon;
+  document.getElementById('result-type-name').textContent = type.name;
+  document.getElementById('result-catch').textContent = type.catch;
+
+  // 同点サブバッジ
+  const subArea = document.getElementById('sub-badge-area');
+  subArea.innerHTML = '';
+  const sortedScores = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+  const topScore = sortedScores[0][1];
+  const ties = sortedScores.filter(s => s[1] === topScore);
+  if (ties.length > 1) {
+    const subKey = ties.find(t => t[0] !== topKey)?.[0];
+    if (subKey) {
+      const sub = TYPES[subKey];
+      subArea.innerHTML = `<div class="sub-badge">${sub.icon} ${sub.name}の要素も！</div>`;
+    }
+  }
+
+  // 詳細カード
+  const detailsEl = document.getElementById('result-details');
+  detailsEl.innerHTML = type.details.map(d => `
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <span class="detail-tag ${d.tagClass}">${d.tag}</span>
+      </div>
+      <p>${d.body}</p>
+    </div>
+  `).join('');
+
+  // スコアバー
+  const barsEl = document.getElementById('score-bars');
+  const fillClass = { A:'fill-a', B:'fill-b', C:'fill-c', D:'fill-d' };
+  const typeDisplay = { A:TYPES.A.name, B:TYPES.B.name, C:TYPES.C.name, D:TYPES.D.name };
+  const typeIcon = { A:TYPES.A.icon, B:TYPES.B.icon, C:TYPES.C.icon, D:TYPES.D.icon };
+  barsEl.innerHTML = Object.entries(scores).sort((a,b)=>b[1]-a[1]).map(([k,v]) => {
+    const pct = Math.round((v / maxPossible) * 100);
+    return `
+      <div class="score-row">
+        <div class="score-label">${typeIcon[k]} ${typeDisplay[k].replace('タイプ','')}</div>
+        <div class="score-bar-bg">
+          <div class="score-bar-fill ${fillClass[k]}" style="width:0%" data-target="${pct}%"></div>
+        </div>
+        <div class="score-pct">${pct}%</div>
+      </div>
+    `;
+  }).join('');
+
+  // 同点注釈
+  const tiedArea = document.getElementById('tied-note-area');
+  tiedArea.innerHTML = '';
+  if (ties.length > 1) {
+    const names = ties.map(t => `${TYPES[t[0]].icon}${TYPES[t[0]].name}`).join('・');
+    tiedArea.innerHTML = `<div class="tied-note">✨ ${names}が同点でした！<br>あなたはどちらの要素も持つ複合タイプです。</div>`;
+  }
+
+  // シェアテキスト
+  document.getElementById('share-text').textContent = type.share;
+
+  switchScreen('result');
+
+  // バーアニメーション
+  setTimeout(() => {
+    document.querySelectorAll('.score-bar-fill').forEach(el => {
+      el.style.width = el.dataset.target;
+    });
+  }, 300);
+}
+
+function copyShare() {
+  const text = document.getElementById('share-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const done = document.getElementById('copy-done');
+    done.style.opacity = '1';
+    setTimeout(() => done.style.opacity = '0', 2500);
+  });
+}
+
+function retryQuiz() {
+  switchScreen('start');
+}
+
+function switchScreen(name) {
+  ['start','quiz','loading','result'].forEach(s => {
+    const el = document.getElementById(`screen-${s}`);
+    el.style.display = 'none';
+  });
+  const target = document.getElementById(`screen-${name}`);
+  target.style.display = 'flex';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
