@@ -215,11 +215,23 @@ body::before {
 }
 
 /* ナビメニュー */
+/* ══════════════════════════════════════
+   デスクトップナビ（headerの外に配置）
+   ══════════════════════════════════════ */
 .site-nav {
+  /* デスクトップ：headerに重ねてfixedで表示
+     右側にmypageボタン(約120px)+ハンバーガー(44px)+gap分の余白を確保 */
+  position: fixed;
+  top: 0;
+  /* マイページボタン幅(~120px) + ハンバーガー(44px) + 余白 = 約200px */
+  right: calc(clamp(16px, 4vw, 48px) + 200px);
+  height: 64px;         /* header-innerと同じ高さ */
   display: flex;
   align-items: center;
   gap: 4px;
   list-style: none;
+  z-index: 1001;        /* headerより上 */
+  pointer-events: auto;
 }
 
 .site-nav a {
@@ -1035,37 +1047,49 @@ body::before {
 }
 
 @media (max-width: 720px) {
-  /* ── デスクトップ用リストは非表示 ── */
-  .site-nav { display: none; }
+
+  /* ══ スマホ：デスクトップ用fixed配置を無効化 ══ */
+  .site-nav {
+    /* デスクトップのfixed配置をリセット */
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: auto;
+    /* 閉じた状態：完全に非表示 */
+    display: none;
+    pointer-events: none;
+  }
+
   .hamburger { display: flex; }
 
-  /* ── 開いた状態：position:fixedで画面全体に展開 ── */
+  /* ══ 開いた状態：body直下のfixedドロワー ══ */
   .site-nav.open {
+    /* body直下なのでbackdrop-filterの制約ゼロ */
     display: flex !important;
+    pointer-events: auto;
     flex-direction: column;
     list-style: none;
-    /* navタグ除去済みのため、fixedで確実に画面全体へ */
     position: fixed;
-    top: 64px;          /* ヘッダー高さ分 */
+    top: 64px;
     left: 0;
     right: 0;
     bottom: 0;
-    width: 100vw;       /* 横幅を確実に100%に */
+    width: 100%;
     margin: 0;
-    padding: 20px 16px 40px;
-    gap: 8px;
-    background: rgba(250,248,255,0.97);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    padding: 24px 16px 60px;
+    gap: 10px;
+    background: rgba(250,248,255,0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    z-index: 998;       /* mypage(1001) hamburger(1001) より下 */
-    box-shadow: 0 4px 24px rgba(90,60,120,.14);
-    animation: slideDown 0.22s ease both;
+    z-index: 1200;   /* headerのz-index(1000)より確実に上 */
+    box-shadow: 0 4px 24px rgba(90,60,120,.15);
+    animation: navSlideIn 0.2s ease both;
   }
 
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-8px); }
+  @keyframes navSlideIn {
+    from { opacity: 0; transform: translateY(-10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
@@ -1081,30 +1105,32 @@ body::before {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 20px;
-    border-radius: 14px;
+    padding: 18px 20px;
+    border-radius: 16px;
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--ink);
-    background: rgba(124,58,237,.04);
+    background: rgba(124,58,237,.05);
     border: 1.5px solid transparent;
-    transition: background .15s, border-color .15s;
+    transition: background .15s, border-color .15s, color .15s;
+    text-decoration: none;
   }
+
   .site-nav.open > li > a:hover,
   .site-nav.open > li > a:active {
     background: var(--accent-light);
     color: var(--accent);
-    border-color: rgba(124,58,237,.2);
+    border-color: rgba(124,58,237,.25);
   }
 
-  /* プレミアムリンクだけ色を維持 */
+  /* プレミアムリンク */
   .site-nav.open .nav-premium > a {
     background: linear-gradient(135deg, var(--accent), #c026d3) !important;
     color: white !important;
-    box-shadow: 0 2px 10px rgba(124,58,237,.25);
+    box-shadow: 0 2px 12px rgba(124,58,237,.3);
   }
 
-  /* ── スマホ用その他レイアウト調整 ── */
+  /* ══ スマホ用レイアウト調整 ══ */
   .section-header { flex-direction: column; align-items: flex-start; }
   .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .footer-top { flex-direction: column; gap: 32px; }
@@ -1139,13 +1165,6 @@ body::before {
       </span>
     </a>
 
-    <ul class="site-nav" id="siteNav" role="list">
-        <li><a href="#about"><span class="nav-icon">📖</span>サイト紹介</a></li>
-        <li><a href="#column"><span class="nav-icon">✏️</span>コラム</a></li>
-        <li class="nav-premium"><a href="#premium"><span class="nav-icon">✨</span>プレミアム診断</a></li>
-        <li><a href="#sns"><span class="nav-icon">🔗</span>関連SNS</a></li>
-    </ul>
-
     <!-- マイページアイコン -->
     <a href="./mypage.html" class="mypage-icon-btn" id="mypageBtn" aria-label="マイページ" title="マイページ">
       <div class="mypage-avatar-ring" id="mypageAvatarRing">
@@ -1161,6 +1180,14 @@ body::before {
 
   </div>
 </header>
+
+<!-- ═══ スマホ用ドロワーメニュー（headerの外に置くことでbackdrop-filterの制約を回避）═══ -->
+<ul class="site-nav" id="siteNav" role="list" aria-label="サイトナビゲーション">
+  <li><a href="#about"><span class="nav-icon">📖</span>サイト紹介</a></li>
+  <li><a href="#column"><span class="nav-icon">✏️</span>コラム</a></li>
+  <li class="nav-premium"><a href="#premium"><span class="nav-icon">✨</span>プレミアム診断</a></li>
+  <li><a href="#sns"><span class="nav-icon">🔗</span>関連SNS</a></li>
+</ul>
 
 <!-- ═══════════════════ HERO ═══════════════════ -->
 <section class="hero">
