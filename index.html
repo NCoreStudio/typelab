@@ -1111,47 +1111,8 @@ body::before {
       <a href="#genres" class="see-all">すべて見る →</a>
     </div>
 
-    <div class="new-scroll-tray">
-
-      <!-- ① ふたりのモヤモヤ整理室（恋愛） -->
-      <a href="./関係改善ジェネレータ/index.html" class="new-card">
-        <div class="new-card-thumb" style="background: linear-gradient(135deg, #ffe4ef 0%, #fde8e8 100%);">
-          💌
-        </div>
-        <span class="new-tag">NEW</span>
-        <div class="new-card-body">
-          <span class="new-card-badge" style="background:var(--love-light);color:var(--love-dark);">💕 恋愛関係</span>
-          <h3 class="new-card-title">ふたりのモヤモヤ整理室</h3>
-          <p class="new-card-desc">言えずにいる気持ちを可視化。関係改善のきっかけを診断から見つけよう。</p>
-        </div>
-      </a>
-
-      <!-- ② ThinkType（仕事） -->
-      <a href="./thinktype/index.html" class="new-card">
-        <div class="new-card-thumb" style="background: linear-gradient(135deg, #dde9ff 0%, #ede9fe 100%);">
-          🧠
-        </div>
-        <span class="new-tag">NEW</span>
-        <div class="new-card-body">
-          <span class="new-card-badge" style="background:var(--work-light);color:var(--work-dark);">💼 仕事関係</span>
-          <h3 class="new-card-title">ThinkType｜思考タイプ診断</h3>
-          <p class="new-card-desc">外向×内向・視覚×言語の2軸で、あなた固有の思考スタイルを明らかに。</p>
-        </div>
-      </a>
-
-      <!-- ③ わらいのツボ診断（その他） -->
-      <a href="./uniquetype/index.html" class="new-card">
-        <div class="new-card-thumb" style="background: linear-gradient(135deg, #fef0d5 0%, #ffeef4 100%);">
-          😂
-        </div>
-        <span class="new-tag">NEW</span>
-        <div class="new-card-body">
-          <span class="new-card-badge" style="background:var(--other-light);color:var(--other-dark);">🌈 その他</span>
-          <h3 class="new-card-title">わらいのツボ診断</h3>
-          <p class="new-card-desc">あなたの「笑いのクセ」を4タイプに分類。ほっこり・ひらめき・スパイス・カオス。</p>
-        </div>
-      </a>
-
+    <div class="new-scroll-tray" id="newScrollTray">
+      <!-- 動的に最新診断がここに表示されます -->
     </div>
   </div>
 </section>
@@ -1701,6 +1662,181 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
 revealEls.forEach(el => observer.observe(el));
+
+/* ── 診断ツール動的管理システム ── */
+class DiagnosisManager {
+  constructor() {
+    // 診断ツールの設定データ
+    this.diagnoses = [
+      {
+        id: 'relationship',
+        title: 'ふたりのモヤモヤ整理室',
+        desc: '言えずにいる気持ちを可視化。関係改善のきっかけを診断から見つけよう。',
+        emoji: '💌',
+        genre: 'love',
+        genreLabel: '💕 恋愛関係',
+        path: './関係改善ジェネレータ/index.html',
+        gradient: 'linear-gradient(135deg, #ffe4ef 0%, #fde8e8 100%)',
+        addedDate: new Date('2025-01-15')
+      },
+      {
+        id: 'thinktype',
+        title: 'ThinkType｜思考タイプ診断',
+        desc: '外向×内向・視覚×言語の2軸で、あなた固有の思考スタイルを明らかに。',
+        emoji: '🧠',
+        genre: 'work',
+        genreLabel: '💼 仕事関係',
+        path: './thinktype/index.html',
+        gradient: 'linear-gradient(135deg, #dde9ff 0%, #ede9fe 100%)',
+        addedDate: new Date('2025-01-10')
+      },
+      {
+        id: 'uniquetype',
+        title: 'わらいのツボ診断',
+        desc: 'あなたの「笑いのクセ」を4タイプに分類。ほっこり・ひらめき・スパイス・カオス。',
+        emoji: '😂',
+        genre: 'other',
+        genreLabel: '🌈 その他',
+        path: './uniquetype/index.html',
+        gradient: 'linear-gradient(135deg, #fef0d5 0%, #ffeef4 100%)',
+        addedDate: new Date('2025-01-05')
+      }
+    ];
+    
+    this.genreColors = {
+      love: { light: 'var(--love-light)', dark: 'var(--love-dark)' },
+      friend: { light: 'var(--friend-light)', dark: 'var(--friend-dark)' },
+      work: { light: 'var(--work-light)', dark: 'var(--work-dark)' },
+      other: { light: 'var(--other-light)', dark: 'var(--other-dark)' }
+    };
+  }
+
+  // 新しい診断を追加するメソッド
+  addDiagnosis(diagnosis) {
+    diagnosis.addedDate = new Date();
+    this.diagnoses.push(diagnosis);
+    this.updateLatestDiagnoses();
+    this.updateGenreSections();
+    this.updateFooter();
+    this.updateStats();
+  }
+
+  // 最新の診断3つを取得
+  getLatestDiagnoses(count = 3) {
+    return [...this.diagnoses]
+      .sort((a, b) => b.addedDate - a.addedDate)
+      .slice(0, count);
+  }
+
+  // 新着診断セクションを更新
+  updateLatestDiagnoses() {
+    const container = document.getElementById('newScrollTray');
+    if (!container) return;
+
+    const latest = this.getLatestDiagnoses(3);
+    
+    container.innerHTML = latest.map((diagnosis, index) => `
+      <a href="${diagnosis.path}" class="new-card">
+        <div class="new-card-thumb" style="background: ${diagnosis.gradient};">
+          ${diagnosis.emoji}
+        </div>
+        ${index === 0 ? '<span class="new-tag">NEW</span>' : ''}
+        <div class="new-card-body">
+          <span class="new-card-badge" style="background:${this.genreColors[diagnosis.genre].light};color:${this.genreColors[diagnosis.genre].dark};">
+            ${diagnosis.genreLabel}
+          </span>
+          <h3 class="new-card-title">${diagnosis.title}</h3>
+          <p class="new-card-desc">${diagnosis.desc}</p>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  // ジャンルセクションを更新
+  updateGenreSections() {
+    const genres = ['love', 'friend', 'work', 'other'];
+    
+    genres.forEach(genre => {
+      const section = document.querySelector(`[data-genre="${genre}"] .cards-grid`);
+      if (!section) return;
+
+      const genreDiagnoses = this.diagnoses.filter(d => d.genre === genre);
+      const implemented = genreDiagnoses.filter(d => d.path);
+      
+      // 実装済み診断を更新
+      const implementedCards = implemented.map(diagnosis => `
+        <a href="${diagnosis.path}" class="diag-card" style="--gc:var(--${genre});--gc-light:var(--${genre}-light);--gc-dark:var(--${genre}-dark)">
+          <div class="card-icon">${diagnosis.emoji}</div>
+          <span class="card-genre-badge" style="background:var(--${genre}-light);color:var(--${genre}-dark);">
+            ${diagnosis.genreLabel}
+          </span>
+          <h3 class="card-title">${diagnosis.title}</h3>
+          <p class="card-desc">${diagnosis.desc}</p>
+          <div class="card-meta">
+            <span class="card-questions">📝 診断実装済み</span>
+            <span class="card-arrow">→</span>
+          </div>
+        </a>
+      `).join('');
+
+      // 既存の実装済みカードを置き換え
+      const existingCards = section.querySelectorAll('.diag-card:not(.coming-soon)');
+      existingCards.forEach(card => card.remove());
+      
+      // 新しい実装済みカードを先頭に追加
+      if (implementedCards) {
+        section.insertAdjacentHTML('afterbegin', implementedCards);
+      }
+
+      // カウンターを更新
+      const counter = document.querySelector(`[data-genre="${genre}"] .genre-count`);
+      if (counter) {
+        const total = 10; // 設定上の最大数
+        const active = implemented.length;
+        counter.textContent = `${total} TOOLS （${active} 公開中）`;
+      }
+    });
+  }
+
+  // フッターの診断リンクを更新
+  updateFooter() {
+    const footerDiagnoses = document.querySelector('.footer-nav-col h4');
+    if (!footerDiagnoses || footerDiagnoses.textContent !== 'DIAGNOSES') return;
+
+    const footerCol = footerDiagnoses.parentElement;
+    const latest = this.getLatestDiagnoses(3);
+    
+    const diagnosisLinks = latest.map(diagnosis => 
+      `<a href="${diagnosis.path}">${diagnosis.title}</a>`
+    ).join('');
+
+    // 既存の診断リンクを更新
+    const existingLinks = footerCol.querySelectorAll('a');
+    existingLinks.forEach(link => link.remove());
+    footerCol.insertAdjacentHTML('beforeend', diagnosisLinks);
+  }
+
+  // 統計情報を更新
+  updateStats() {
+    const implementedCount = this.diagnoses.filter(d => d.path).length;
+    const statNum = document.querySelector('.stat-num');
+    if (statNum) {
+      statNum.textContent = implementedCount;
+    }
+  }
+
+  // 初期化
+  init() {
+    this.updateLatestDiagnoses();
+    this.updateGenreSections();
+    this.updateFooter();
+    this.updateStats();
+  }
+}
+
+// 診断マネージャーを初期化
+const diagnosisManager = new DiagnosisManager();
+diagnosisManager.init();
 
 /* ── アクティブナビハイライト（スクロール連動） ── */
 const navLinks = nav.querySelectorAll('a[href^="#"]');
