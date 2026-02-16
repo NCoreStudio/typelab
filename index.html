@@ -85,6 +85,58 @@ body::before {
   opacity: 0.5;
 }
 
+/* ── マイページアイコン ── */
+.mypage-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 5px;
+  border-radius: var(--r-full);
+  text-decoration: none;
+  color: var(--ink-mid);
+  border: 1.5px solid rgba(124,58,237,.15);
+  background: white;
+  box-shadow: var(--shadow-sm);
+  transition: all .22s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+.mypage-icon-btn:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.mypage-avatar-ring {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #c026d3);
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.mypage-icon-btn:hover .mypage-avatar-ring { transform: rotate(-8deg) scale(1.08); }
+.mypage-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+/* ログイン済み緑ドット */
+.mypage-login-dot {
+  position: absolute;
+  top: 2px; right: 2px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid white;
+  display: none;
+}
+.mypage-login-dot.visible { display: block; }
+
 /* ════════════════════════════════════════
    NAVIGATION
    ════════════════════════════════════════ */
@@ -1043,6 +1095,15 @@ body::before {
       </ul>
     </nav>
 
+    <!-- マイページアイコン -->
+    <a href="./mypage.html" class="mypage-icon-btn" id="mypageBtn" aria-label="マイページ" title="マイページ">
+      <div class="mypage-avatar-ring" id="mypageAvatarRing">
+        <span id="mypageAvatarEmoji">👤</span>
+      </div>
+      <span class="mypage-label" id="mypageLabel">マイページ</span>
+      <span class="mypage-login-dot" id="mypageLoginDot"></span>
+    </a>
+
     <button class="hamburger" id="hamburger" aria-label="メニューを開く">
       <span></span><span></span><span></span>
     </button>
@@ -1859,6 +1920,66 @@ window.addEventListener('scroll', () => {
     }
   });
 }, { passive: true });
+
+/* ════════════════════════════════════
+   🔥 Firebase ログイン状態反映（ヘッダー）
+   ════════════════════════════════════ */
+// Firebase CDN（mypage.htmlと同じ設定）
+const _fbScript1 = document.createElement('script');
+_fbScript1.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+document.head.appendChild(_fbScript1);
+
+_fbScript1.onload = () => {
+  const _fbScript2 = document.createElement('script');
+  _fbScript2.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
+  document.head.appendChild(_fbScript2);
+
+  const _fbScript3 = document.createElement('script');
+  _fbScript3.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+  document.head.appendChild(_fbScript3);
+
+  _fbScript2.onload = () => {
+    _fbScript3.onload = () => {
+      // Firebase設定（firebase-common.jsと同一値）
+      const firebaseConfig = {
+        apiKey:            "AIzaSyBLuQpm7NASl4kD4FTKPOmHNfuaWT_ydEI",
+        authDomain:        "shindanlab-eedc0.firebaseapp.com",
+        projectId:         "shindanlab-eedc0",
+        storageBucket:     "shindanlab-eedc0.firebasestorage.app",
+        messagingSenderId: "946383078896",
+        appId:             "1:946383078896:web:09e48c3f75f2d7e8d8c935"
+      };
+
+      // 既に初期化済みなら再利用
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      const _auth = firebase.auth();
+      const _db   = firebase.firestore();
+
+      const dot       = document.getElementById('mypageLoginDot');
+      const avatarEl  = document.getElementById('mypageAvatarEmoji');
+      const labelEl   = document.getElementById('mypageLabel');
+
+      _auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          dot.classList.add('visible');
+          try {
+            const doc = await _db.collection('users').doc(user.uid).get();
+            const data = doc.exists ? doc.data() : {};
+            avatarEl.textContent = data.avatar || '🧪';
+            const name = (data.username || user.displayName || 'あなた');
+            labelEl.textContent = name.length > 6 ? name.slice(0, 6) + '…' : name;
+          } catch(e) {
+            avatarEl.textContent = '🧪';
+          }
+        } else {
+          dot.classList.remove('visible');
+          avatarEl.textContent = '👤';
+          labelEl.textContent  = 'マイページ';
+        }
+      });
+    };
+  };
+};
 </script>
 </body>
 </html>

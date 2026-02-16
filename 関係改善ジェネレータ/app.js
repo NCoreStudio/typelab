@@ -177,7 +177,7 @@ const state = {
   selected: new Set(),
   scores: {},
   topAxes: [],
-  goto(n) { this.step = n; render(); },
+  async goto(n) { this.step = n; await render(); },
 };
 
 /* ═══════════════════════════════════════════
@@ -359,12 +359,12 @@ function renderStep1() {
     });
   });
 
-  document.getElementById('btn-next').addEventListener('click', () => {
+  document.getElementById('btn-next').addEventListener('click', async () => {
     if (state.selected.size === 0) {
       showToast('ひとつだけでもOK。気になるものに✓してみてください');
       return;
     }
-    state.goto(2);
+    await state.goto(2);
   });
 }
 
@@ -390,11 +390,11 @@ function renderStep2() {
       </div>
     </div>
   `;
-  setTimeout(() => {
+  setTimeout(async () => {
     const result = calcScores(state.selected);
     state.scores  = result.scores;
     state.topAxes = result.topAxes;
-    state.goto(3);
+    await state.goto(3);
   }, 2200);
 }
 
@@ -402,7 +402,7 @@ function renderStep2() {
    10. Step3
    ═══════════════════════════════════════════ */
 
-function renderStep3() {
+async function renderStep3() {
   const app = document.getElementById('app');
   const { scores, topAxes } = state;
   const advices  = buildAdvice(topAxes, scores);
@@ -509,6 +509,7 @@ function renderStep3() {
     <div class="result-actions">
       <button class="btn btn-secondary btn-block" id="btn-retry">もう一度やる</button>
       <button class="btn btn-ghost btn-block" id="btn-back-keep">選択を保持して戻る</button>
+      <button class="btn btn-primary btn-block" onclick="location.href='../index.html'">← トップページへ戻る</button>
     </div>
   `;
 
@@ -548,27 +549,49 @@ function renderStep3() {
     });
   });
 
-  document.getElementById('btn-retry').addEventListener('click', () => {
+  document.getElementById('btn-retry').addEventListener('click', async () => {
     state.selected.clear();
-    state.goto(1);
+    await state.goto(1);
   });
 
-  document.getElementById('btn-back-keep').addEventListener('click', () => {
-    state.goto(1);
+  document.getElementById('btn-back-keep').addEventListener('click', async () => {
+    await state.goto(1);
   });
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Save diagnosis result to Firestore
+  if (window.saveDiagnosisResult) {
+    // 認証状態を確認してから保存
+    const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!currentUser) {
+      console.log('🔐 認証状態をリフレッシュします...');
+      if (window.refreshAuthState) {
+        await window.refreshAuthState();
+      }
+    }
+    
+    window.saveDiagnosisResult({
+      diagnosisId: "relationship",
+      diagnosisTitle: "ふたりのモヤモヤ整理室",
+      resultType: topAxes[0] || "unknown",
+      resultEmoji: "🌿",
+      resultDesc: `${topAxes.slice(0, 3).join('・')}の傾向があります`,
+      scores: scores,
+      maxScore: 25
+    });
+  }
 }
 
 /* ═══════════════════════════════════════════
    11. メインレンダラー
    ═══════════════════════════════════════════ */
 
-function render() {
+async function render() {
   switch (state.step) {
     case 1: renderStep1(); break;
     case 2: renderStep2(); break;
-    case 3: renderStep3(); break;
+    case 3: await renderStep3(); break;
     default: renderStep1();
   }
   window.scrollTo({ top: 0, behavior: 'instant' });
@@ -585,4 +608,6 @@ function escapeHTML(str) {
 }
 
 /* ── 起動 ── */
-render();
+(async () => {
+  await render();
+})();

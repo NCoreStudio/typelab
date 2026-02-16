@@ -484,6 +484,12 @@ body  {
 .btn-retry:hover { background: #1E293B; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
 
 </style>
+
+<!-- Firebase SDK (compat version) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="../firebase-common.js"></script>
 </head>
 <body>
 
@@ -617,6 +623,9 @@ body  {
 
     <!-- Retry -->
     <div class="retry-wrap">
+      <button class="btn-retry" onclick="location.href='../index.html'">
+        ← トップページへ戻る
+      </button>
       <button class="btn-retry" onclick="retryQuiz()">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M14 8A6 6 0 1 1 8 2M8 2l3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -918,17 +927,17 @@ function calcScores() {
 }
 
 // ==================== RESULT ====================
-function showResult() {
+async function showResult() {
   if (answers[current] === undefined) return;
-  transition(() => {
+  transition(async () => {
     document.getElementById('quiz').style.display   = 'none';
     document.getElementById('result').style.display = 'block';
-    renderResult();
+    await renderResult();
     window.scrollTo(0, 0);
   });
 }
 
-function renderResult() {
+async function renderResult() {
   const { extScore, visScore, typeKey } = calcScores();
   const type = types[typeKey];
 
@@ -981,6 +990,28 @@ function renderResult() {
       <div class="insight-item-label" style="color:${type.color.primary};">FIELD</div>
       <div class="insight-item-text">${it}</div>
     </div>`).join('');
+
+  // Save diagnosis result to Firestore
+  if (window.saveDiagnosisResult) {
+    // 認証状態を確認してから保存
+    const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!currentUser) {
+      console.log('🔐 認証状態をリフレッシュします...');
+      if (window.refreshAuthState) {
+        await window.refreshAuthState();
+      }
+    }
+    
+    window.saveDiagnosisResult({
+      diagnosisId: "thinktype",
+      diagnosisTitle: "ThinkType｜あなたの思考タイプ診断",
+      resultType: typeKey,
+      resultEmoji: type.emoji || "",
+      resultDesc: type.subtitle || "",
+      scores: { extScore, visScore },
+      maxScore: 20
+    });
+  }
 }
 
 // ==================== SCATTER CHART ====================

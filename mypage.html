@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マイページ｜SHINDAN LAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Zen+Kaku+Gothic+New:wght@300;400;700;900&family=DotGothic16&family=M+PLUS+Rounded+1c:wght@300;400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase v9 CDN (compat版) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════
+   SHINDAN LAB — 共通デザイントークン
+   ═══════════════════════════════════════════════ */
+:root {
+  --ink:         #1a1424;
+  --ink-mid:     #5c4f6e;
+  --ink-soft:    #9b8fb0;
+  --bg:          #faf8ff;
+  --bg-warm:     #f7f4f0;
+  --paper:       #ffffff;
+  --love:        #ff6b9d;
+  --love-light:  #ffe4ef;
+  --love-dark:   #d63880;
+  --friend:      #43c59e;
+  --friend-light:#d9f5ec;
+  --friend-dark: #2a9a7a;
+  --work:        #5b8dee;
+  --work-light:  #dde9ff;
+  --work-dark:   #3a6bcc;
+  --other:       #f5a623;
+  --other-light: #fef0d5;
+  --other-dark:  #c87e10;
+  --accent:      #7c3aed;
+  --accent-light:#ede9fe;
+  --shadow-sm:   0 2px 8px rgba(90,60,120,.10);
+  --shadow-md:   0 4px 24px rgba(90,60,120,.14);
+  --shadow-lg:   0 8px 40px rgba(90,60,120,.18);
+  --font-display:'Kaisei Decol', serif;
+  --font-body:   'Zen Kaku Gothic New', sans-serif;
+  --font-dot:    'DotGothic16', sans-serif;
+  --font-round:  'M PLUS Rounded 1c', sans-serif;
+  --r-sm: 8px; --r-md: 16px; --r-lg: 24px; --r-xl: 36px; --r-full: 9999px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* ════════════════════════════════
+   HEADER
+   ════════════════════════════════ */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(250,248,255,0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1.5px solid rgba(124,58,237,.10);
+  padding: 0 clamp(16px, 4vw, 48px);
+}
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.site-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.logo-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent) 0%, #c026d3 100%);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-dot);
+  color: white;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.logo-text { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; color: var(--ink); }
+.logo-sub { font-family: var(--font-dot); font-size: 0.6rem; color: var(--ink-soft); display: block; }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.btn-back {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--r-full);
+  font-size: 0.82rem; font-weight: 700;
+  color: var(--ink-mid);
+  text-decoration: none;
+  border: 1.5px solid rgba(90,60,120,.15);
+  transition: background .2s, transform .2s;
+}
+.btn-back:hover { background: var(--accent-light); color: var(--accent); transform: translateX(-2px); }
+
+/* ════════════════════════════════
+   AUTH SECTION（ログイン前）
+   ════════════════════════════════ */
+.auth-section {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.auth-card {
+  background: white;
+  border-radius: var(--r-xl);
+  padding: clamp(32px, 5vw, 56px) clamp(24px, 4vw, 48px);
+  max-width: 440px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  border: 1.5px solid rgba(124,58,237,.08);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: 50%;
+  transform: translateX(-50%);
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(124,58,237,.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.auth-icon {
+  width: 72px; height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, #c026d3 100%);
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  margin: 0 auto 20px;
+  box-shadow: 0 4px 16px rgba(124,58,237,.3);
+}
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.auth-desc {
+  font-size: 0.85rem;
+  color: var(--ink-mid);
+  line-height: 1.8;
+  margin-bottom: 32px;
+}
+
+/* タブ */
+.auth-tabs {
+  display: flex;
+  background: var(--bg);
+  border-radius: var(--r-full);
+  padding: 3px;
+  margin-bottom: 28px;
+}
+.auth-tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: var(--r-full);
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  transition: background .2s, color .2s;
+}
+.auth-tab.active {
+  background: white;
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* フォーム */
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.form-group { text-align: left; }
+.form-label {
+  display: block;
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--ink-mid);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid rgba(124,58,237,.15);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--ink);
+  background: var(--bg);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+}
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.1);
+}
+
+.btn-auth {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, #c026d3 100%);
+  color: white;
+  border: none;
+  border-radius: var(--r-full);
+  font-family: var(--font-body);
+  font-size: 0.95rem; font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 16px rgba(124,58,237,.3);
+  transition: transform .2s, box-shadow .2s;
+  margin-top: 4px;
+}
+.btn-auth:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,.4); }
+.btn-auth:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 4px 0;
+  font-size: 0.76rem; color: var(--ink-soft);
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(124,58,237,.12);
+}
+
+.btn-google {
+  width: 100%;
+  padding: 13px;
+  background: white;
+  color: var(--ink);
+  border: 1.5px solid rgba(0,0,0,.12);
+  border-radius: var(--r-full);
+  font-family: var(--font-body);
+  font-size: 0.92rem; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: transform .2s, box-shadow .2s;
+}
+.btn-google:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.auth-error {
+  background: #fff0f0;
+  border: 1px solid #ffbcbc;
+  color: #c0392b;
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  text-align: left;
+  display: none;
+}
+.auth-error.show { display: block; }
+
+/* ════════════════════════════════
+   MYPAGE（ログイン後）
+   ════════════════════════════════ */
+.mypage-section {
+  position: relative; z-index: 1;
+  padding: clamp(32px, 5vw, 60px) clamp(16px, 4vw, 48px);
+  display: none; /* ログイン後に表示 */
+}
+
+.mypage-inner { max-width: 1000px; margin: 0 auto; }
+
+/* ── プロフィールヘッダー ── */
+.profile-header {
+  background: white;
+  border-radius: var(--r-xl);
+  padding: clamp(24px, 4vw, 40px);
+  box-shadow: var(--shadow-card);
+  border: 1.5px solid rgba(124,58,237,.06);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-header::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(124,58,237,.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.avatar-wrap { position: relative; flex-shrink: 0; }
+
+.avatar {
+  width: 80px; height: 80px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--accent) 0%, #c026d3 100%);
+  display: grid;
+  place-items: center;
+  font-size: 2.2rem;
+  box-shadow: 0 4px 16px rgba(124,58,237,.25);
+  cursor: pointer;
+  transition: transform .2s;
+  position: relative;
+  overflow: hidden;
+}
+.avatar:hover { transform: scale(1.05); }
+.avatar img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 22px;
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: -4px; right: -4px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--bg);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.profile-info { flex: 1; min-width: 0; }
+
+/* インライン名前編集 */
+.username-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.username-display {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-weight: 700;
+  color: var(--ink);
+}
+.btn-edit-name {
+  padding: 4px 12px;
+  border-radius: var(--r-full);
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--accent);
+  border: 1.5px solid rgba(124,58,237,.25);
+  background: var(--accent-light);
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-edit-name:hover { background: rgba(124,58,237,.15); }
+
+.username-edit-form {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.username-edit-form.show { display: flex; }
+.username-input {
+  padding: 8px 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-md);
+  font-family: var(--font-display);
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--ink);
+  outline: none;
+  max-width: 220px;
+}
+.btn-save-name {
+  padding: 7px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--r-full);
+  font-size: 0.82rem; font-weight: 700;
+  cursor: pointer;
+}
+.btn-cancel-name {
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1.5px solid rgba(0,0,0,.1);
+  border-radius: var(--r-full);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.profile-email { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 14px; }
+
+.profile-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px;
+  border-radius: var(--r-full);
+  font-size: 0.72rem; font-weight: 700;
+  background: var(--accent-light);
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.profile-actions { margin-left: auto; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.btn-logout {
+  padding: 8px 18px;
+  border-radius: var(--r-full);
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--ink-soft);
+  border: 1.5px solid rgba(0,0,0,.1);
+  background: transparent;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.btn-logout:hover { background: #fff0f0; color: #c0392b; border-color: #ffbcbc; }
+
+/* ── 統計バー ── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.stat-card {
+  background: white;
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid rgba(124,58,237,.06);
+  text-align: center;
+}
+.stat-card .num {
+  font-family: var(--font-display);
+  font-size: 2rem; font-weight: 700;
+  color: var(--accent);
+  display: block; line-height: 1;
+}
+.stat-card .label {
+  font-family: var(--font-dot);
+  font-size: 0.7rem; color: var(--ink-soft);
+  letter-spacing: 0.08em;
+  margin-top: 6px; display: block;
+}
+
+/* ── 診断履歴セクション ── */
+.history-section-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem; font-weight: 700;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.history-filter {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: var(--r-full);
+  font-size: 0.78rem; font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  background: white;
+  color: var(--ink-mid);
+  box-shadow: var(--shadow-sm);
+  transition: all .18s;
+}
+.filter-chip:hover { transform: translateY(-1px); }
+.filter-chip.active { background: var(--ink); color: white; }
+.filter-chip[data-genre="love"].active { background: var(--love-light); color: var(--love-dark); border-color: var(--love); }
+.filter-chip[data-genre="friend"].active { background: var(--friend-light); color: var(--friend-dark); border-color: var(--friend); }
+.filter-chip[data-genre="work"].active { background: var(--work-light); color: var(--work-dark); border-color: var(--work); }
+.filter-chip[data-genre="other"].active { background: var(--other-light); color: var(--other-dark); border-color: var(--other); }
+
+/* ── 履歴カードリスト ── */
+.history-list { display: flex; flex-direction: column; gap: 14px; }
+
+.history-card {
+  background: white;
+  border-radius: var(--r-lg);
+  border: 1.5px solid rgba(124,58,237,.06);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .2s;
+}
+.history-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.history-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.history-card-icon {
+  width: 48px; height: 48px;
+  border-radius: var(--r-sm);
+  display: grid; place-items: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+.history-card-meta { flex: 1; min-width: 0; }
+.history-card-title {
+  font-family: var(--font-display);
+  font-size: 0.98rem; font-weight: 700;
+  margin-bottom: 4px; color: var(--ink);
+}
+.history-card-date {
+  font-family: var(--font-dot);
+  font-size: 0.68rem; color: var(--ink-soft);
+  letter-spacing: 0.06em;
+}
+.history-card-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--r-full);
+  font-size: 0.68rem; font-weight: 700;
+  flex-shrink: 0;
+}
+.history-card-arrow {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--ink-soft);
+  transition: transform .2s, background .2s;
+  flex-shrink: 0;
+}
+.history-card.open .history-card-arrow { transform: rotate(90deg); background: var(--accent-light); color: var(--accent); }
+
+/* ── 結果パネル（展開） ── */
+.history-card-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .4s ease;
+}
+.history-card.open .history-card-body { max-height: 1000px; }
+
+.result-panel {
+  padding: 0 20px 20px;
+  border-top: 1px solid rgba(124,58,237,.06);
+}
+.result-type-label {
+  font-family: var(--font-dot);
+  font-size: 0.7rem; letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  margin: 16px 0 8px;
+  text-transform: uppercase;
+}
+.result-type-value {
+  font-family: var(--font-display);
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.result-desc {
+  font-size: 0.84rem;
+  color: var(--ink-mid);
+  line-height: 1.8;
+  background: var(--bg);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.result-scores { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.score-row { display: flex; align-items: center; gap: 10px; }
+.score-name { font-size: 0.8rem; font-weight: 700; min-width: 90px; color: var(--ink-mid); }
+.score-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: var(--bg);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--accent), #c026d3);
+  transition: width .6s ease;
+}
+.score-num { font-family: var(--font-dot); font-size: 0.72rem; color: var(--ink-soft); min-width: 30px; text-align: right; }
+
+.result-actions { display: flex; gap: 8px; }
+.btn-retry {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--r-full);
+  font-family: var(--font-body);
+  font-size: 0.82rem; font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform .2s;
+}
+.btn-retry:hover { transform: translateY(-2px); }
+.btn-delete {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px;
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1.5px solid rgba(0,0,0,.1);
+  border-radius: var(--r-full);
+  font-size: 0.82rem; font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-delete:hover { background: #fff0f0; color: #c0392b; border-color: #ffbcbc; }
+
+/* ── 空の履歴 ── */
+.history-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: var(--r-xl);
+  border: 2px dashed rgba(124,58,237,.15);
+}
+.history-empty .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+.history-empty h3 { font-family: var(--font-display); font-size: 1.1rem; color: var(--ink-mid); margin-bottom: 8px; }
+.history-empty p { font-size: 0.84rem; color: var(--ink-soft); line-height: 1.8; }
+.history-empty .btn-go {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 20px;
+  padding: 11px 24px;
+  background: linear-gradient(135deg, var(--accent), #c026d3);
+  color: white;
+  border-radius: var(--r-full);
+  text-decoration: none;
+  font-weight: 700; font-size: 0.88rem;
+  box-shadow: 0 4px 14px rgba(124,58,237,.3);
+}
+
+/* ── ローディング ── */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: rgba(250,248,255,.9);
+  display: grid; place-items: center;
+  z-index: 2000;
+  transition: opacity .3s;
+}
+.loading-overlay.hide { opacity: 0; pointer-events: none; }
+.loading-spinner {
+  width: 48px; height: 48px;
+  border: 3px solid rgba(124,58,237,.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── トースト通知 ── */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--r-full);
+  font-size: 0.88rem; font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  z-index: 3000;
+  transition: transform .3s ease;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── アバター選択モーダル ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,20,36,.5);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: none; place-items: center;
+}
+.modal-overlay.open { display: grid; }
+.modal-box {
+  background: white;
+  border-radius: var(--r-xl);
+  padding: 32px 28px;
+  max-width: 400px; width: calc(100% - 40px);
+  box-shadow: var(--shadow-lg);
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem; font-weight: 700;
+  margin-bottom: 20px; text-align: center;
+}
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.emoji-option {
+  width: 48px; height: 48px;
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  display: grid; place-items: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all .15s;
+}
+.emoji-option:hover { background: var(--accent-light); transform: scale(1.1); }
+.emoji-option.selected { border-color: var(--accent); background: var(--accent-light); }
+.modal-close {
+  width: 100%;
+  padding: 11px;
+  border-radius: var(--r-full);
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--ink-mid);
+  background: var(--bg);
+  border: 1.5px solid rgba(0,0,0,.1);
+  cursor: pointer;
+}
+
+/* ════════════════ レスポンシブ ════════════════ */
+@media (max-width: 640px) {
+  .profile-header { flex-direction: column; align-items: flex-start; }
+  .profile-actions { margin-left: 0; flex-direction: row; align-items: center; }
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ローディング -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<!-- アバター選択モーダル -->
+<div class="modal-overlay" id="avatarModal">
+  <div class="modal-box">
+    <h3 class="modal-title">🎨 アバターを選ぶ</h3>
+    <div class="emoji-grid" id="emojiGrid">
+      <!-- JSで生成 -->
+    </div>
+    <button class="modal-close" id="modalClose">閉じる</button>
+  </div>
+</div>
+
+<!-- ════════ HEADER ════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="./index.html" class="site-logo">
+      <div class="logo-mark">⚗</div>
+      <span>
+        <span class="logo-text">SHINDAN LAB</span>
+        <span class="logo-sub">診断の実験室</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <a href="./index.html" class="btn-back">← トップに戻る</a>
+    </div>
+  </div>
+</header>
+
+<!-- ════════ AUTH（ログイン前） ════════ -->
+<div class="auth-section" id="authSection">
+  <div class="auth-card">
+    <div class="auth-icon">🧪</div>
+    <h1 class="auth-title">マイページ</h1>
+    <p class="auth-desc">ログインして、診断の記録を保存・管理しよう。</p>
+
+    <!-- タブ -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">ログイン</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">新規登録</button>
+    </div>
+
+    <!-- エラー -->
+    <div class="auth-error" id="authError"></div>
+
+    <!-- ログインフォーム -->
+    <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">パスワード</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="6文字以上" required>
+      </div>
+      <button type="submit" class="btn-auth" id="loginBtn">ログイン →</button>
+    </form>
+
+    <!-- 登録フォーム -->
+    <form class="auth-form" id="registerForm" style="display:none" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label class="form-label">ユーザー名</label>
+        <input type="text" class="form-input" id="regUsername" placeholder="表示名を入力" required maxlength="20">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input type="email" class="form-input" id="regEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">パスワード</label>
+        <input type="password" class="form-input" id="regPassword" placeholder="6文字以上" required minlength="6">
+      </div>
+      <button type="submit" class="btn-auth" id="registerBtn">登録して始める →</button>
+    </form>
+
+    <div class="divider">または</div>
+
+    <button class="btn-google" onclick="handleGoogleLogin()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 6.294C4.672 4.169 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Googleでログイン
+    </button>
+  </div>
+</div>
+
+<!-- ════════ MYPAGE（ログイン後） ════════ -->
+<section class="mypage-section" id="mypageSection">
+  <div class="mypage-inner">
+
+    <!-- プロフィールヘッダー -->
+    <div class="profile-header">
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatarDisplay" onclick="openAvatarModal()">🧪</div>
+        <div class="avatar-edit-btn" onclick="openAvatarModal()">✏️</div>
+      </div>
+
+      <div class="profile-info">
+        <!-- 名前表示 -->
+        <div class="username-row" id="usernameRow">
+          <span class="username-display" id="usernameDisplay">ユーザー</span>
+          <button class="btn-edit-name" onclick="startEditName()">✏️ 編集</button>
+        </div>
+        <!-- 名前編集フォーム -->
+        <div class="username-edit-form" id="usernameEditForm">
+          <input type="text" class="username-input" id="usernameInput" maxlength="20" placeholder="名前を入力">
+          <button class="btn-save-name" onclick="saveName()">保存</button>
+          <button class="btn-cancel-name" onclick="cancelEditName()">キャンセル</button>
+        </div>
+
+        <p class="profile-email" id="profileEmail"></p>
+        <div class="profile-badges">
+          <span class="profile-badge" id="memberBadge">🧪 LABメンバー</span>
+          <span class="profile-badge" id="diagCountBadge">📊 0回診断済み</span>
+        </div>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn-logout" onclick="handleLogout()">ログアウト</button>
+      </div>
+    </div>
+
+    <!-- 統計バー -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <span class="num" id="statTotal">0</span>
+        <span class="label">TOTAL 診断回数</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statGenres">0</span>
+        <span class="label">受診ジャンル数</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statRecent">—</span>
+        <span class="label">最終受診日</span>
+      </div>
+      <div class="stat-card">
+        <span class="num" id="statFavorite">—</span>
+        <span class="label">よく診断するジャンル</span>
+      </div>
+    </div>
+
+    <!-- 診断履歴 -->
+    <h2 class="history-section-title">🔬 診断履歴</h2>
+
+    <div class="history-filter" id="historyFilter">
+      <button class="filter-chip active" data-genre="all" onclick="filterHistory('all', this)">🔬 すべて</button>
+      <button class="filter-chip" data-genre="love" onclick="filterHistory('love', this)">💕 恋愛</button>
+      <button class="filter-chip" data-genre="friend" onclick="filterHistory('friend', this)">👫 友達</button>
+      <button class="filter-chip" data-genre="work" onclick="filterHistory('work', this)">💼 仕事</button>
+      <button class="filter-chip" data-genre="other" onclick="filterHistory('other', this)">🌈 その他</button>
+    </div>
+
+    <div class="history-list" id="historyList">
+      <!-- JS で描画 -->
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+   JAVASCRIPT
+   ════════════════════════════════════════════ -->
+<script>
+/* ───────────────────────────────
+   🔥 Firebase 設定
+   ★ ここに自分のFirebaseプロジェクト設定を貼り付けてください
+   ─────────────────────────────── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyBLuQpm7NASl4kD4FTKPOmHNfuaWT_ydEI",
+  authDomain:        "shindanlab-eedc0.firebaseapp.com",
+  projectId:         "shindanlab-eedc0",
+  storageBucket:     "shindanlab-eedc0.firebasestorage.app",
+  messagingSenderId: "946383078896",
+  appId:             "1:946383078896:web:09e48c3f75f2d7e8d8c935"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+/* ───────────────────────────────
+   診断ツールマスターデータ
+   （diagnosis-config.js と同期してください）
+   ─────────────────────────────── */
+const DIAGNOSIS_MASTER = {
+  relationship: {
+    title: 'ふたりのモヤモヤ整理室',
+    emoji: '💌',
+    genre: 'love',
+    genreLabel: '💕 恋愛関係',
+    path: './関係改善ジェネレータ/index.html',
+    gradient: 'linear-gradient(135deg, #ffe4ef 0%, #fde8e8 100%)',
+    iconBg: 'var(--love-light)',
+    badgeBg: 'var(--love-light)', badgeColor: 'var(--love-dark)'
+  },
+  thinktype: {
+    title: 'ThinkType｜思考タイプ診断',
+    emoji: '🧠',
+    genre: 'work',
+    genreLabel: '💼 仕事関係',
+    path: './thinktype/index.html',
+    gradient: 'linear-gradient(135deg, #dde9ff 0%, #ede9fe 100%)',
+    iconBg: 'var(--work-light)',
+    badgeBg: 'var(--work-light)', badgeColor: 'var(--work-dark)'
+  },
+  uniquetype: {
+    title: 'わらいのツボ診断',
+    emoji: '😂',
+    genre: 'other',
+    genreLabel: '🌈 その他',
+    path: './uniquetype/index.html',
+    gradient: 'linear-gradient(135deg, #fef0d5 0%, #ffeef4 100%)',
+    iconBg: 'var(--other-light)',
+    badgeBg: 'var(--other-light)', badgeColor: 'var(--other-dark)'
+  }
+};
+
+/* ───────────────────────────────
+   グローバル状態
+   ─────────────────────────────── */
+let currentUser = null;
+let allHistories = [];
+let currentFilter = 'all';
+let currentAvatar = '🧪';
+
+const AVATAR_OPTIONS = ['🧪','🔬','🌸','🌈','💎','🦋','🎯','⚡','🌙','🎭',
+                        '🦊','🐱','🦄','🌺','🎪','🔮','🎨','🧩','✨','🚀'];
+
+/* ───────────────────────────────
+   ユーティリティ
+   ─────────────────────────────── */
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function showLoading(show) {
+  document.getElementById('loadingOverlay').classList.toggle('hide', !show);
+}
+
+function showError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function clearError() {
+  document.getElementById('authError').classList.remove('show');
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+function formatDateShort(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+}
+
+/* ───────────────────────────────
+   Auth タブ切替
+   ─────────────────────────────── */
+function switchTab(tab) {
+  clearError();
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'flex' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'flex' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+}
+
+/* ───────────────────────────────
+   ログイン
+   ─────────────────────────────── */
+async function handleLogin(e) {
+  e.preventDefault();
+  clearError();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const email = document.getElementById('loginEmail').value;
+    const pass  = document.getElementById('loginPassword').value;
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(err) {
+    showError(getAuthErrorMsg(err.code));
+    btn.disabled = false; btn.textContent = 'ログイン →';
+  }
+}
+
+/* ───────────────────────────────
+   新規登録
+   ─────────────────────────────── */
+async function handleRegister(e) {
+  e.preventDefault();
+  clearError();
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const username = document.getElementById('regUsername').value.trim();
+    const email    = document.getElementById('regEmail').value;
+    const pass     = document.getElementById('regPassword').value;
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    // Firestoreにユーザー情報を保存
+    await db.collection('users').doc(cred.user.uid).set({
+      username,
+      email,
+      avatar: '🧪',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await cred.user.updateProfile({ displayName: username });
+  } catch(err) {
+    showError(getAuthErrorMsg(err.code));
+    btn.disabled = false; btn.textContent = '登録して始める →';
+  }
+}
+
+/* ───────────────────────────────
+   Googleログイン
+   ─────────────────────────────── */
+async function handleGoogleLogin() {
+  clearError();
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const cred = await auth.signInWithPopup(provider);
+    // 初回ならユーザーを作成
+    const userDoc = await db.collection('users').doc(cred.user.uid).get();
+    if (!userDoc.exists) {
+      await db.collection('users').doc(cred.user.uid).set({
+        username: cred.user.displayName || 'ユーザー',
+        email: cred.user.email,
+        avatar: '🧪',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  } catch(err) {
+    showError(getAuthErrorMsg(err.code));
+  }
+}
+
+/* ───────────────────────────────
+   ログアウト
+   ─────────────────────────────── */
+async function handleLogout() {
+  await auth.signOut();
+  showToast('ログアウトしました');
+}
+
+/* ───────────────────────────────
+   認証エラーメッセージ
+   ─────────────────────────────── */
+function getAuthErrorMsg(code) {
+  const map = {
+    'auth/user-not-found':      'メールアドレスが見つかりません',
+    'auth/wrong-password':      'パスワードが正しくありません',
+    'auth/invalid-email':       'メールアドレスの形式が正しくありません',
+    'auth/email-already-in-use':'このメールアドレスはすでに使用されています',
+    'auth/weak-password':       'パスワードは6文字以上にしてください',
+    'auth/too-many-requests':   'しばらく時間をおいて再試行してください',
+    'auth/popup-closed-by-user':'ログインがキャンセルされました',
+    'auth/invalid-credential':  'メールアドレスまたはパスワードが正しくありません',
+  };
+  return map[code] || `ログインエラー（${code}）`;
+}
+
+/* ───────────────────────────────
+   Auth 状態監視
+   ─────────────────────────────── */
+auth.onAuthStateChanged(async (user) => {
+  showLoading(true);
+  if (user) {
+    currentUser = user;
+    document.getElementById('authSection').style.display  = 'none';
+    document.getElementById('mypageSection').style.display = 'block';
+    await loadUserProfile(user);
+    await loadHistory(user);
+  } else {
+    currentUser = null;
+    document.getElementById('authSection').style.display  = 'flex';
+    document.getElementById('mypageSection').style.display = 'none';
+  }
+  showLoading(false);
+});
+
+/* ───────────────────────────────
+   ユーザー情報を読み込む
+   ─────────────────────────────── */
+async function loadUserProfile(user) {
+  try {
+    const docRef = db.collection('users').doc(user.uid);
+    const doc = await docRef.get();
+    const data = doc.exists ? doc.data() : {};
+    const username = data.username || user.displayName || 'ユーザー';
+    const avatar   = data.avatar || '🧪';
+    currentAvatar  = avatar;
+
+    // ドキュメントが存在しない場合（Googleログイン初回等）は作成
+    if (!doc.exists) {
+      await docRef.set({
+        username,
+        email: user.email || '',
+        avatar,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log('[MyPage] usersドキュメントを新規作成しました');
+    }
+
+    document.getElementById('usernameDisplay').textContent = username;
+    document.getElementById('profileEmail').textContent    = user.email || '';
+    document.getElementById('avatarDisplay').textContent   = avatar;
+    console.log('[MyPage] プロフィール読み込み完了:', username, avatar);
+  } catch(e) {
+    console.error('[MyPage] プロフィール読み込みエラー:', e.code, e.message);
+    // エラー時はAuth情報だけで表示
+    document.getElementById('usernameDisplay').textContent = user.displayName || 'ユーザー';
+    document.getElementById('profileEmail').textContent    = user.email || '';
+  }
+}
+
+/* ───────────────────────────────
+   名前編集
+   ─────────────────────────────── */
+function startEditName() {
+  const current = document.getElementById('usernameDisplay').textContent;
+  document.getElementById('usernameInput').value = current;
+  document.getElementById('usernameRow').style.display = 'none';
+  document.getElementById('usernameEditForm').classList.add('show');
+  document.getElementById('usernameInput').focus();
+}
+function cancelEditName() {
+  document.getElementById('usernameRow').style.display = 'flex';
+  document.getElementById('usernameEditForm').classList.remove('show');
+}
+async function saveName() {
+  const newName = document.getElementById('usernameInput').value.trim();
+  if (!newName) { showToast('⚠️ 名前を入力してください'); return; }
+  const btn = document.querySelector('.btn-save-name');
+  btn.disabled = true; btn.textContent = '保存中...';
+  try {
+    if (!currentUser) throw new Error('ログインしていません');
+    // Firestoreのusersドキュメントを更新
+    await db.collection('users').doc(currentUser.uid).set(
+      { username: newName },
+      { merge: true }   // ドキュメントが存在しなくても作成する
+    );
+    // Firebase AuthのdisplayNameも更新
+    await currentUser.updateProfile({ displayName: newName });
+    document.getElementById('usernameDisplay').textContent = newName;
+    cancelEditName();
+    showToast('✅ 名前を更新しました');
+    console.log('[MyPage] ユーザー名を更新しました:', newName);
+  } catch(e) {
+    console.error('[MyPage] 名前更新エラー:', e.code, e.message);
+    showToast('⚠️ 更新に失敗しました: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '保存';
+  }
+}
+
+/* ───────────────────────────────
+   アバターモーダル
+   ─────────────────────────────── */
+function openAvatarModal() {
+  const grid = document.getElementById('emojiGrid');
+  grid.innerHTML = AVATAR_OPTIONS.map(em => `
+    <div class="emoji-option ${em === currentAvatar ? 'selected' : ''}" onclick="selectAvatar('${em}')">${em}</div>
+  `).join('');
+  document.getElementById('avatarModal').classList.add('open');
+}
+function closeAvatarModal() {
+  document.getElementById('avatarModal').classList.remove('open');
+}
+async function selectAvatar(emoji) {
+  currentAvatar = emoji;
+  document.getElementById('avatarDisplay').textContent = emoji;
+  // グリッド更新
+  document.querySelectorAll('.emoji-option').forEach(el => {
+    el.classList.toggle('selected', el.textContent === emoji);
+  });
+  try {
+    await db.collection('users').doc(currentUser.uid).set(
+      { avatar: emoji },
+      { merge: true }
+    );
+    showToast(`${emoji} アバターを変更しました`);
+  } catch(e) { /* 続行 */ }
+  setTimeout(closeAvatarModal, 400);
+}
+document.getElementById('modalClose').addEventListener('click', closeAvatarModal);
+document.getElementById('avatarModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeAvatarModal();
+});
+
+/* ───────────────────────────────
+   診断履歴を読み込む
+   ─────────────────────────────── */
+async function loadHistory(user) {
+  try {
+    // firebase-common.js が diagnosisHistory コレクションに uid フィールド付きで保存
+    const snap = await db
+      .collection('diagnosisHistory')
+      .where('uid', '==', user.uid)
+      .orderBy('timestamp', 'desc')
+      .limit(50)
+      .get();
+
+    allHistories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    console.log('[MyPage] 履歴件数:', allHistories.length);
+    updateStats();
+    renderHistory();
+  } catch(e) {
+    console.error('[MyPage] 履歴読み込みエラー:', e.code, e.message);
+    // FAILED_PRECONDITION = 複合インデックス未作成の場合はフォールバック
+    if (e.code === 'failed-precondition') {
+      console.warn('[MyPage] 複合インデックスが未作成です。Firebaseコンソールでインデックスを作成してください。');
+      console.warn('[MyPage] フォールバック: インデックスなしで取得します');
+      try {
+        // orderByなしで取得してJS側でソート
+        const snap2 = await db
+          .collection('diagnosisHistory')
+          .where('uid', '==', user.uid)
+          .limit(50)
+          .get();
+        allHistories = snap2.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const ta = a.timestamp?.toMillis?.() ?? 0;
+            const tb = b.timestamp?.toMillis?.() ?? 0;
+            return tb - ta;
+          });
+        console.log('[MyPage] フォールバック取得件数:', allHistories.length);
+      } catch(e2) {
+        console.error('[MyPage] フォールバックも失敗:', e2.message);
+        allHistories = [];
+      }
+    } else {
+      allHistories = [];
+    }
+    updateStats();
+    renderHistory();
+  }
+}
+
+/* ───────────────────────────────
+   統計を更新
+   ─────────────────────────────── */
+function updateStats() {
+  const total = allHistories.length;
+  const genres = [...new Set(allHistories.map(h => {
+    const m = DIAGNOSIS_MASTER[h.diagnosisId];
+    return m ? m.genre : null;
+  }).filter(Boolean))].length;
+
+  // firebase-common.js は 'timestamp' フィールドで保存
+  const recentTs = allHistories[0]?.timestamp;
+  const recentStr = recentTs ? formatDateShort(recentTs) : '—';
+
+  // よく診断するジャンル
+  const genreCount = {};
+  allHistories.forEach(h => {
+    const m = DIAGNOSIS_MASTER[h.diagnosisId];
+    if (m) genreCount[m.genre] = (genreCount[m.genre] || 0) + 1;
+  });
+  const favoriteEntry = Object.entries(genreCount).sort((a,b) => b[1]-a[1])[0];
+  const genreEmoji = { love:'💕', friend:'👫', work:'💼', other:'🌈' };
+  const favoriteStr = favoriteEntry ? genreEmoji[favoriteEntry[0]] || '—' : '—';
+
+  document.getElementById('statTotal').textContent    = total;
+  document.getElementById('statGenres').textContent   = genres;
+  document.getElementById('statRecent').textContent   = recentStr;
+  document.getElementById('statFavorite').textContent = favoriteStr;
+  document.getElementById('diagCountBadge').textContent = `📊 ${total}回診断済み`;
+}
+
+/* ───────────────────────────────
+   履歴フィルタ
+   ─────────────────────────────── */
+function filterHistory(genre, btn) {
+  currentFilter = genre;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory();
+}
+
+/* ───────────────────────────────
+   履歴を描画
+   ─────────────────────────────── */
+function renderHistory() {
+  const list = document.getElementById('historyList');
+
+  const filtered = currentFilter === 'all'
+    ? allHistories
+    : allHistories.filter(h => {
+        const m = DIAGNOSIS_MASTER[h.diagnosisId];
+        return m && m.genre === currentFilter;
+      });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="history-empty">
+        <div class="empty-icon">🔬</div>
+        <h3>まだ診断記録がありません</h3>
+        <p>診断を受けると、ここに結果が記録されます。<br>気になる診断をぜひ試してみてください！</p>
+        <a href="./index.html" class="btn-go">🧪 診断を探す</a>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(h => renderHistoryCard(h)).join('');
+}
+
+function renderHistoryCard(h) {
+  const m = DIAGNOSIS_MASTER[h.diagnosisId] || {
+    title: h.diagnosisId,
+    emoji: '📊',
+    genre: 'other',
+    genreLabel: 'その他',
+    path: '#',
+    iconBg: 'var(--bg)',
+    badgeBg: 'var(--other-light)', badgeColor: 'var(--other-dark)'
+  };
+
+  // firebase-common.js は 'timestamp' フィールドで保存
+  const dateStr = formatDate(h.timestamp);
+
+  // スコアバーHTML
+  let scoresHtml = '';
+  if (h.scores && typeof h.scores === 'object') {
+    scoresHtml = `<div class="result-scores">` +
+      Object.entries(h.scores).map(([k, v]) => {
+        const pct = Math.min(100, Math.round((v / (h.maxScore || 5)) * 100));
+        return `<div class="score-row">
+          <span class="score-name">${k}</span>
+          <div class="score-bar-wrap"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+          <span class="score-num">${v}</span>
+        </div>`;
+      }).join('') + `</div>`;
+  }
+
+  return `
+    <div class="history-card" id="card-${h.id}">
+      <div class="history-card-header" onclick="toggleCard('${h.id}')">
+        <div class="history-card-icon" style="background:${m.iconBg}">${m.emoji}</div>
+        <div class="history-card-meta">
+          <div class="history-card-title">${m.title}</div>
+          <div class="history-card-date">📅 ${dateStr}</div>
+        </div>
+        <span class="history-card-badge" style="background:${m.badgeBg};color:${m.badgeColor}">${m.genreLabel}</span>
+        <div class="history-card-arrow">›</div>
+      </div>
+      <div class="history-card-body">
+        <div class="result-panel">
+          ${h.resultType ? `
+            <p class="result-type-label">診断結果タイプ</p>
+            <div class="result-type-value">${h.resultEmoji || ''} ${h.resultType}</div>
+          ` : ''}
+          ${h.resultDesc ? `<p class="result-desc">${h.resultDesc}</p>` : ''}
+          ${scoresHtml}
+          <div class="result-actions">
+            <a href="${m.path}" class="btn-retry">🔬 もう一度診断する</a>
+            <button class="btn-delete" onclick="deleteHistory('${h.id}')">🗑 削除</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleCard(id) {
+  document.getElementById(`card-${id}`).classList.toggle('open');
+}
+
+/* ───────────────────────────────
+   履歴を削除
+   ─────────────────────────────── */
+async function deleteHistory(historyId) {
+  if (!confirm('この診断記録を削除しますか？')) return;
+  try {
+    // 保存先と同じ diagnosisHistory コレクションから削除
+    await db.collection('diagnosisHistory').doc(historyId).delete();
+    allHistories = allHistories.filter(h => h.id !== historyId);
+    updateStats();
+    renderHistory();
+    showToast('🗑 削除しました');
+  } catch(e) {
+    console.error('[MyPage] 削除エラー:', e.message);
+    showToast('⚠️ 削除に失敗しました');
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ✅ 診断結果の保存は firebase-common.js の
+      window.saveDiagnosisResult() が担当します。
+   各診断ツール（thinktype / uniquetype 等）は
+   firebase-common.js を読み込むことで自動的に
+   diagnosisHistory コレクションへ保存されます。
+   ═══════════════════════════════════════════════════ */
+
+</script>
+</body>
+</html>

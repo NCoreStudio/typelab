@@ -626,6 +626,12 @@
   }
 
 </style>
+
+<!-- Firebase SDK (compat version) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="../firebase-common.js"></script>
 </head>
 <body>
 <div class="wrapper">
@@ -723,6 +729,7 @@
       <div class="copy-done" id="copy-done">✅ コピーしました！</div>
     </div>
 
+    <button class="btn-retry" onclick="location.href='../index.html'">← トップページへ戻る</button>
     <button class="btn-retry" onclick="retryQuiz()">🔄 もういちど診断する</button>
   </div>
 
@@ -978,9 +985,9 @@ function prevQuestion() {
   }
 }
 
-function showLoading() {
+async function showLoading() {
   switchScreen('loading');
-  setTimeout(() => showResult(), 1800);
+  setTimeout(async () => await showResult(), 1800);
 }
 
 // ─────────────────────────────────────
@@ -998,7 +1005,7 @@ function getTopType(scores) {
   return Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
 }
 
-function showResult() {
+async function showResult() {
   const scores = calcScores();
   const topKey = getTopType(scores);
   const type = TYPES[topKey];
@@ -1073,6 +1080,28 @@ function showResult() {
       el.style.width = el.dataset.target;
     });
   }, 300);
+
+  // Save diagnosis result to Firestore
+  if (window.saveDiagnosisResult) {
+    // 認証状態を確認してから保存
+    const currentUser = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (!currentUser) {
+      console.log('🔐 認証状態をリフレッシュします...');
+      if (window.refreshAuthState) {
+        await window.refreshAuthState();
+      }
+    }
+    
+    window.saveDiagnosisResult({
+      diagnosisId: "uniquetype",
+      diagnosisTitle: "わらいのツボ診断",
+      resultType: topKey,
+      resultEmoji: type.icon || "",
+      resultDesc: type.catch || "",
+      scores: scores,
+      maxScore: 25
+    });
+  }
 }
 
 function copyShare() {
