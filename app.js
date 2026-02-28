@@ -1,6 +1,6 @@
 class BoothReservationApp {
     constructor() {
-        this.currentDate = new Date().toISOString().split('T')[0];
+        this.currentDate = this.getTodayLocalDate();
         this.currentFloor = '6F';
         this.selectedSeat = null;
         this.isAdmin = false;
@@ -11,9 +11,24 @@ class BoothReservationApp {
         this.editingLog = null;
         this.selectedSeats = new Set();
         this.previewCurrentFloor = '6F';
-        this.previewCurrentDate = new Date().toISOString().split('T')[0];
+        this.previewCurrentDate = this.getTodayLocalDate();
         
         this.init();
+    }
+
+    getTodayLocalDate() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    toLocalDateString(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
     }
 
     init() {
@@ -221,7 +236,7 @@ class BoothReservationApp {
         const currentDate = new Date(this.currentDate);
         currentDate.setDate(currentDate.getDate() + direction);
         
-        const newDate = currentDate.toISOString().split('T')[0];
+        const newDate = this.toLocalDateString(currentDate);
         this.currentDate = newDate;
         
         const dateSelect = document.getElementById('dateSelect');
@@ -925,7 +940,7 @@ class BoothReservationApp {
         
         for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
             if (weekdays.includes(date.getDay())) {
-                dates.push(new Date(date).toISOString().split('T')[0]);
+                dates.push(this.toLocalDateString(new Date(date)));
             }
         }
         
